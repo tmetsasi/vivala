@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUserProfile } from '../api/authApi';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
-// 📌 Määritellään navigoinnin tyypitys
+// 📌 Navigoinnin tyyppi
 type AuthStackParamList = {
     Auth: undefined;   // Kirjautumissivu
     Main: undefined;   // Sovelluksen pääsivu
@@ -16,22 +17,27 @@ const ProfileScreen = () => {
     const [loading, setLoading] = useState(true);
     const navigation = useNavigation<NavigationProps>();
 
-    // 🔥 Kova koodattu token (testaamista varten)
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJiNmFkZTJjNC1lYTU5LTRhZjgtYjZmZi1mYTQ4NGRmMzBmZTgiLCJndWVzdCI6dHJ1ZSwiaWF0IjoxNzQxNTk5MTI3LCJleHAiOjE3NDQxOTExMjd9.50muvgE8trT3_kVqSjltWmz4fj0EdR8BGje1NSBxTFA";
-
     useEffect(() => {
         const fetchUserData = async () => {
-            console.log("📡 Lähetetään GET /api/user/profile pyyntö tokenilla:", token);
-        
+            const token = await AsyncStorage.getItem("token");  // 🔥 Haetaan token AsyncStoragesta
+            console.log("🔑 Haettu token AsyncStoragesta:", token);
+
+            if (!token) {
+                console.log("⛔ Ei tokenia tallennettuna, ohjataan kirjautumissivulle.");
+                setLoading(false);
+                navigation.replace("Auth");  // 🔥 Ohjataan kirjautumissivulle
+                return;
+            }
+
             const response = await getUserProfile(token);
             console.log("📡 API-vastaus:", response);
-        
+
             if (response.success) {
                 setUser(response.user);
             } else {
                 console.error("⚠️ Käyttäjätietojen haku epäonnistui:", response.message);
             }
-        
+
             setLoading(false);
         };
 
@@ -39,9 +45,11 @@ const ProfileScreen = () => {
     }, []);
 
     // 📌 Kirjaudu ulos -toiminto
-    const handleLogout = () => {
+    const handleLogout = async () => {
         console.log("🔑 Kirjaudutaan ulos...");
-        navigation.navigate("Auth");  // 🔥 Ohjataan kirjautumissivulle
+        await AsyncStorage.removeItem("token");  // 🔥 Poistetaan token
+        await AsyncStorage.removeItem("userId");  // 🔥 Poistetaan userId
+        navigation.replace("Auth");  // 🔥 Ohjataan takaisin kirjautumissivulle
     };
 
     if (loading) {
