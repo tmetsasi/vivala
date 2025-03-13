@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { registerUser, guestLogin } from '../../api/authApi';
+import { registerUser, guestLogin, loginUser } from '../../api/authApi';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { RootStackParamList } from '../../navigation/AppNavigator';
@@ -20,16 +20,28 @@ const RegisterScreen = () => {
             return;
         }
         setLoading(true);
-        const response = await registerUser(email, password);
+    
+        // 🟢 1. Rekisteröi käyttäjä
+        const registerResponse = await registerUser(email, password);
+    
+        if (!registerResponse.success) {
+            setLoading(false);
+            Alert.alert("❌ Virhe", registerResponse.message || "Rekisteröinti epäonnistui.");
+            return;
+        }
+    
+        // 🟢 2. Kirjaudu automaattisesti sisään
+        const loginResponse = await loginUser(email, password);
         setLoading(false);
-
-        if (response.success) {
-            Alert.alert("Rekisteröityminen onnistui!", "Voit nyt kirjautua sisään.");
-            navigation.navigate("Login"); // Siirrytään kirjautumissivulle
+    
+        if (loginResponse.success) {
+            Alert.alert("✅ Rekisteröinti ja kirjautuminen onnistui!");
         } else {
-            Alert.alert("Virhe", response.message || "Rekisteröinti epäonnistui.");
+            Alert.alert("❌ Kirjautumisvirhe", loginResponse.message || "Kirjautuminen epäonnistui.");
         }
     };
+    
+    
 
     // 📌 Jatka vieraana (Guest Login)
     const handleGuestLogin = async () => {
@@ -55,6 +67,7 @@ const RegisterScreen = () => {
                 keyboardType="email-address"
                 value={email}
                 onChangeText={setEmail}
+                autoCapitalize='none'
             />
 
             {/* 🔹 Salasana-kenttä */}
@@ -64,6 +77,7 @@ const RegisterScreen = () => {
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
+                autoCapitalize='none'
             />
 
             {/* 🔹 Rekisteröidy-painike */}

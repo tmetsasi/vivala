@@ -28,7 +28,6 @@ const navigation = useNavigation<NavigationProps>();
 
         if (response.success) {
             Alert.alert("Kirjautuminen onnistui!", "Tervetuloa takaisin!");
-            navigation.replace("Main"); // Siirrytään etusivulle
         } else {
             Alert.alert("Virhe", response.message || "Kirjautuminen epäonnistui.");
         }
@@ -37,15 +36,20 @@ const navigation = useNavigation<NavigationProps>();
     // 📌 Jatka vieraana (Guest Login)
     const handleGuestLogin = async () => {
         setLoading(true);
-        const response = await guestLogin();
+    
+        const response = await guestLogin(); // Kirjautuminen vierailijana
+    
         setLoading(false);
-
+    
         if (response.success) {
-            navigation.replace("Main"); // Siirrytään suoraan etusivulle
+            console.log("✅ Vierailijakirjautuminen onnistui!");
+    
+            // 🔥 EI TARVITSE `navigation.replace("Main")`, koska AppNavigator hoitaa tämän
         } else {
-            Alert.alert("Virhe", "Vierastilille kirjautuminen epäonnistui.");
+            Alert.alert("❌ Kirjautumisvirhe", response.message || "Jotain meni pieleen.");
         }
     };
+    
 
     return (
         <View style={styles.container}>
@@ -58,6 +62,7 @@ const navigation = useNavigation<NavigationProps>();
                 keyboardType="email-address"
                 value={email}
                 onChangeText={setEmail}
+                autoCapitalize='none'
             />
 
             {/* 🔹 Salasana-kenttä */}
@@ -67,6 +72,7 @@ const navigation = useNavigation<NavigationProps>();
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
+                autoCapitalize='none'
             />
 
             {/* 🔹 Kirjaudu sisään -painike */}

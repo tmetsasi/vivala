@@ -47,10 +47,16 @@ const ProfileScreen = () => {
     // 📌 Kirjaudu ulos -toiminto
     const handleLogout = async () => {
         console.log("🔑 Kirjaudutaan ulos...");
-        await AsyncStorage.removeItem("token");  // 🔥 Poistetaan token
-        await AsyncStorage.removeItem("userId");  // 🔥 Poistetaan userId
-        navigation.replace("Auth");  // 🔥 Ohjataan takaisin kirjautumissivulle
+    
+        await AsyncStorage.removeItem("token");
+        await AsyncStorage.removeItem("userId");
+    
+        const checkToken = await AsyncStorage.getItem("token");
+        console.log("🔍 Token poistettu, uusi arvo:", checkToken); // Tarkistetaan, että token oikeasti poistui
+    
+        // 🔥 EI TARVITSE navigation.replace("Auth"), koska AppNavigator hoitaa näkymän vaihdon
     };
+    
 
     if (loading) {
         return <ActivityIndicator size="large" color="#007bff" style={styles.loader} />;

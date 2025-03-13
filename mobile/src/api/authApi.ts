@@ -65,3 +65,65 @@ export const getUserProfile = async (token: string) => {
         return { success: false, message: "Error fetching user profile" };
     }
 };
+
+export const registerUser = async (email: string, password: string) => {
+    try {
+        const response = await fetch(`${API_URL}/auth/register`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("❌ Rekisteröinti epäonnistui:", error);
+        return { success: false, message: "Rekisteröinti epäonnistui." };
+    }
+};
+export const loginUser = async (email: string, password: string) => {
+    try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            // 💾 Tallennetaan käyttäjän token ja userId AsyncStorageen
+            await AsyncStorage.setItem("userId", data.userId);
+            await AsyncStorage.setItem("token", data.token);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("❌ Kirjautuminen epäonnistui:", error);
+        return { success: false, message: "Kirjautuminen epäonnistui." };
+    }
+};
+export const checkAuthStatus = async () => {
+    try {
+        const token = await AsyncStorage.getItem("token");
+        const userId = await AsyncStorage.getItem("userId");
+
+        console.log("🔍 Tallennettu token:", token);
+        console.log("🔍 Tallennettu userId:", userId);
+
+        if (token && userId) {
+            return { success: true, userId, token };
+        }
+
+        return { success: false };
+    } catch (error) {
+        console.error("❌ Kirjautumistilan tarkistus epäonnistui:", error);
+        return { success: false };
+    }
+};
+
+
