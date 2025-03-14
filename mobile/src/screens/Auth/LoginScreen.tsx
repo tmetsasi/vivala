@@ -5,6 +5,8 @@ import { CompositeNavigationProp, useNavigation } from '@react-navigation/native
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { RootStackParamList } from '../../navigation/AppNavigator';
+import { useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
 
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
@@ -15,9 +17,15 @@ const LoginScreen = () => {
     StackNavigationProp<RootStackParamList, 'Auth'>
 >;
 const navigation = useNavigation<NavigationProps>();
+const authContext = useContext(AuthContext);
 
-    // 📌 Kirjautuminen sähköpostilla
-    const handleLogin = async () => {
+if (!authContext) {
+    console.error("❌ AuthContext on undefined! Varmista, että AuthProvider on käytössä.");
+    return null; // Estetään virheet, jos AuthContext ei ole saatavilla
+}
+const { login } = authContext;
+
+const handleLogin = async () => {
         if (!email || !password) {
             Alert.alert("Virhe", "Täytä kaikki kentät!");
             return;
@@ -43,7 +51,7 @@ const navigation = useNavigation<NavigationProps>();
     
         if (response.success) {
             console.log("✅ Vierailijakirjautuminen onnistui!");
-    
+            login(response.token)
             // 🔥 EI TARVITSE `navigation.replace("Main")`, koska AppNavigator hoitaa tämän
         } else {
             Alert.alert("❌ Kirjautumisvirhe", response.message || "Jotain meni pieleen.");

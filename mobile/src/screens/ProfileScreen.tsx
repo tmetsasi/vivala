@@ -1,21 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getUserProfile } from '../api/authApi';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-
-// 📌 Navigoinnin tyyppi
-type AuthStackParamList = {
-    Auth: undefined;   // Kirjautumissivu
-    Main: undefined;   // Sovelluksen pääsivu
-};
-type NavigationProps = StackNavigationProp<AuthStackParamList, 'Auth'>;
+import React, { useEffect, useState, useContext } from "react";
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getUserProfile } from "../api/authApi";
+import { AuthContext } from "../context/AuthContext"; // 🔥 Tuodaan AuthContext
 
 const ProfileScreen = () => {
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const navigation = useNavigation<NavigationProps>();
+    const authContext = useContext(AuthContext); // 🔥 Haetaan AuthContext
+
+    if (!authContext) {
+        return (
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator size="large" />
+            </View>
+        );
+    }
+
+    const { logout } = authContext; // 🔥 Nyt logout voidaan hakea turvallisesti
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -25,7 +27,6 @@ const ProfileScreen = () => {
             if (!token) {
                 console.log("⛔ Ei tokenia tallennettuna, ohjataan kirjautumissivulle.");
                 setLoading(false);
-                navigation.replace("Auth");  // 🔥 Ohjataan kirjautumissivulle
                 return;
             }
 
@@ -44,20 +45,6 @@ const ProfileScreen = () => {
         fetchUserData();
     }, []);
 
-    // 📌 Kirjaudu ulos -toiminto
-    const handleLogout = async () => {
-        console.log("🔑 Kirjaudutaan ulos...");
-    
-        await AsyncStorage.removeItem("token");
-        await AsyncStorage.removeItem("userId");
-    
-        const checkToken = await AsyncStorage.getItem("token");
-        console.log("🔍 Token poistettu, uusi arvo:", checkToken); // Tarkistetaan, että token oikeasti poistui
-    
-        // 🔥 EI TARVITSE navigation.replace("Auth"), koska AppNavigator hoitaa näkymän vaihdon
-    };
-    
-
     if (loading) {
         return <ActivityIndicator size="large" color="#007bff" style={styles.loader} />;
     }
@@ -73,7 +60,7 @@ const ProfileScreen = () => {
                     <Text style={styles.info}>🎭 Vieraskäyttäjä: {user.is_guest ? "Kyllä" : "Ei"}</Text>
 
                     {/* 🔥 Kirjaudu ulos -nappi */}
-                    <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                    <TouchableOpacity style={styles.logoutButton} onPress={logout}>
                         <Text style={styles.logoutButtonText}>Kirjaudu ulos</Text>
                     </TouchableOpacity>
                 </>
@@ -88,14 +75,14 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
         padding: 20,
-        backgroundColor: '#fff',
+        backgroundColor: "#fff",
     },
     title: {
         fontSize: 24,
-        fontWeight: 'bold',
+        fontWeight: "bold",
         marginBottom: 20,
     },
     info: {
@@ -104,20 +91,20 @@ const styles = StyleSheet.create({
     },
     loader: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
     },
     logoutButton: {
         marginTop: 20,
-        backgroundColor: '#ff3b30',
+        backgroundColor: "#ff3b30",
         padding: 15,
         borderRadius: 10,
-        alignItems: 'center',
+        alignItems: "center",
     },
     logoutButtonText: {
-        color: '#fff',
+        color: "#fff",
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: "bold",
     },
 });
 

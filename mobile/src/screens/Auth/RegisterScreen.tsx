@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { registerUser, guestLogin, loginUser } from '../../api/authApi';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { RootStackParamList } from '../../navigation/AppNavigator';
+import { AuthContext } from "../../context/AuthContext";
 
 const RegisterScreen = () => {
     const [email, setEmail] = useState('');
@@ -12,7 +13,15 @@ const RegisterScreen = () => {
     const [loading, setLoading] = useState(false);
     type NavigationProps = StackNavigationProp<RootStackParamList & AuthStackParamList>;
     const navigation = useNavigation<NavigationProps>();
-    
+    const authContext = useContext(AuthContext); // 🔥 Haetaan AuthContext
+
+    if (!authContext) {
+        console.error("❌ AuthContext on undefined! Varmista, että AuthProvider on käytössä.");
+        return null;
+    }
+
+    const { login } = authContext;
+
     // 📌 Rekisteröityminen sähköpostilla
     const handleRegister = async () => {
         if (!email || !password) {
@@ -36,6 +45,7 @@ const RegisterScreen = () => {
     
         if (loginResponse.success) {
             Alert.alert("✅ Rekisteröinti ja kirjautuminen onnistui!");
+            login(loginResponse.token)
         } else {
             Alert.alert("❌ Kirjautumisvirhe", loginResponse.message || "Kirjautuminen epäonnistui.");
         }
